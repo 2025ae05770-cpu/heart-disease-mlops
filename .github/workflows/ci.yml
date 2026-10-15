@@ -1,0 +1,172 @@
+name: CI/CD - Heart Disease MLOps
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PYTHON_VERSION: "3.13"
+  MLFLOW_DISABLE_AGENT_HINT: "1"
+  IMAGE_NAME: heart-disease-api
+
+defaults:
+  run:
+    shell: bash  # implies -eo pipefail: any failing command fails the step
+
+jobs:
+  lint:
+    name: 1. Lint (flake8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install flake8
+        run: pip install flake8==7.4.1
+      - name: Run flake8
+        run: |
+          mkdir -p reports/ci
+          flake8 src tests scripts dags --statistics --count --tee --output-file reports/ci/flake8.txt
+      - name: Upload lint report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-report
+          path: reports/ci/flake8.txt
+
+  test:
+    name: 2. Unit tests (pytest)
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests with coverage
+        run: |
+          mkdir -p test-results
+          pytest -v --junitxml=test-results/junit.xml \
+                 --cov=src --cov-report=term-missing --cov-report=xml:test-results/coverage.xml \
+                 --cov-fail-under=75
+      - name: Publish test summary
+        if: always()
+        run: |
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          s = ET.parse("test-results/junit.xml").getroot()
+          s = s if s.tag == "testsuite" else s[0]
+          print(f"### Unit tests\n| tests | failures | errors | skipped | time (s) |\n|---|---|---|---|---|")
+          print(f"| {s.get('tests')} | {s.get('failures')} | {s.get('errors')} | {s.get('skipped')} | {s.get('time')} |")
+          EOF
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results/
+
+  train:
+    name: 3. Train, track & package model
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Download & clean data
+        run: python scripts/download_data.py --force
+      - name: EDA
+        run: python -m src.eda.run_eda
+      - name: Train models (MLflow tracking + registry)
+        run: |
+          mkdir -p logs
+          python -m src.models.train 2>&1 | tee logs/train_console.log
+      - name: Batch inference with packaged model
+        run: python -m src.inference.predict
+      - name: Model summary
+        run: |
+          {
+            echo "### Model comparison (champion in bold)"
+            cat reports/model_comparison.md
+            echo
+            echo "### Champion metadata"
+            echo '```json'
+            cat models/model_metadata.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload model artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: model
+          path: |
+            models/heart_disease_model.joblib
+            models/model_metadata.json
+            models/mlflow_model/
+      - name: Upload training reports, MLflow store & logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-run
+          path: |
+            reports/
+            logs/
+            mlflow.db
+            mlruns/
+            data/processed/
+
+  docker:
+    name: 4. Build & test Docker image
+    needs: train
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use freshly trained model
+        uses: actions/download-artifact@v4
+        with:
+          name: model
+          path: models/
+      - name: Build image
+        run: docker build -t $IMAGE_NAME:${{ github.sha }} -t $IMAGE_NAME:latest .
+      - name: Run container
+        run: docker run -d --name heart-api -p 8000:8000 $IMAGE_NAME:latest
+      - name: Smoke test /health, /predict, /metrics
+        run: python3 scripts/smoke_test.py --url http://127.0.0.1:8000 --wait 90
+      - name: Collect container logs
+        if: always()
+        run: |
+          mkdir -p ci-logs
+          docker logs heart-api > ci-logs/container.log 2>&1 || true
+          docker image ls $IMAGE_NAME > ci-logs/image.txt
+      - name: Upload container logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-logs
+          path: ci-logs/
+      - name: Push image to GHCR (main branch only)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        run: |
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for TAG in ${{ github.sha }} latest; do
+            docker tag $IMAGE_NAME:latest ghcr.io/$OWNER/$IMAGE_NAME:$TAG
+            docker push ghcr.io/$OWNER/$IMAGE_NAME:$TAG
+          done
+      - name: Stop container
+        if: always()
+        run: docker rm -f heart-api || true

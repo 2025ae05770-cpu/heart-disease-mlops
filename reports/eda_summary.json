@@ -1,0 +1,29 @@
+{
+  "shape": [
+    303,
+    14
+  ],
+  "class_balance": {
+    "0": 164,
+    "1": 139
+  },
+  "missing_values": {
+    "ca": 4,
+    "thal": 2
+  },
+  "target_correlation": {
+    "thal": 0.526,
+    "ca": 0.46,
+    "exang": 0.432,
+    "oldpeak": 0.425,
+    "thalach": -0.417,
+    "cp": 0.414,
+    "slope": 0.339,
+    "sex": 0.277,
+    "age": 0.223,
+    "restecg": 0.169,
+    "trestbps": 0.151,
+    "chol": 0.085,
+    "fbs": 0.025
+  }
+}

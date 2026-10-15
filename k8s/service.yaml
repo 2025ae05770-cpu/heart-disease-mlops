@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: heart-disease-api
+  namespace: heart-disease
+  labels:
+    app: heart-disease-api
+spec:
+  # Docker Desktop exposes LoadBalancer services on localhost;
+  # on Minikube run `minikube tunnel` to get an external IP.
+  type: LoadBalancer
+  selector:
+    app: heart-disease-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

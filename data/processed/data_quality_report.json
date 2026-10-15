@@ -1,0 +1,14 @@
+{
+  "rows": 303,
+  "columns": 14,
+  "missing_values": {
+    "ca": 4,
+    "thal": 2
+  },
+  "duplicate_rows": 0,
+  "out_of_range": {},
+  "class_balance": {
+    "0": 164,
+    "1": 139
+  }
+}

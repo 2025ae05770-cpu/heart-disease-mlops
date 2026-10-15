@@ -1,0 +1,52 @@
+{
+  "model_name": "HeartDiseaseRiskChampion",
+  "model_family": "logistic_regression",
+  "model_version": "1",
+  "trained_at": "2026-10-14T12:58:09.670064+00:00",
+  "selection_metric": "cv_roc_auc_mean",
+  "decision_threshold": 0.5,
+  "best_params": {
+    "C": 0.5,
+    "class_weight": "balanced"
+  },
+  "cv_metrics": {
+    "cv_accuracy_mean": 0.8551870748299321,
+    "cv_accuracy_std": 0.023767881465657423,
+    "cv_precision_mean": 0.8748976789800589,
+    "cv_precision_std": 0.07224198399607462,
+    "cv_recall_mean": 0.8098814229249012,
+    "cv_recall_std": 0.06161952654515437,
+    "cv_f1_mean": 0.8367165716332805,
+    "cv_f1_std": 0.024076898301967485,
+    "cv_roc_auc_mean": 0.9092463092463093,
+    "cv_roc_auc_std": 0.018043490562382254
+  },
+  "test_metrics": {
+    "accuracy": 0.8688524590163934,
+    "precision": 0.8125,
+    "recall": 0.9285714285714286,
+    "f1": 0.8666666666666667,
+    "roc_auc": 0.9577922077922079
+  },
+  "feature_columns": [
+    "age",
+    "sex",
+    "cp",
+    "trestbps",
+    "chol",
+    "fbs",
+    "restecg",
+    "thalach",
+    "exang",
+    "oldpeak",
+    "slope",
+    "ca",
+    "thal"
+  ],
+  "n_train_rows": 242,
+  "n_test_rows": 61,
+  "cv_folds": 5,
+  "mlflow_run_id": "ef842c4df11d44a090215a1959f2c832",
+  "python_version": "3.13.16",
+  "sklearn_version": "1.9.1"
+}

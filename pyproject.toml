@@ -1,0 +1,19 @@
+[project]
+name = "heart-disease-mlops"
+version = "1.0.0"
+description = "End-to-end MLOps pipeline for heart disease risk prediction (UCI Cleveland)"
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning:mlflow.*",
+    "ignore::FutureWarning",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/eda/*"]

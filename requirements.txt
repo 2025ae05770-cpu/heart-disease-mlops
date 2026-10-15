@@ -1,0 +1,37 @@
+# Full environment: data, EDA, training, MLflow tracking, API, tests, notebooks.
+# Install:  python -m pip install -r requirements.txt
+# Tested with Python 3.13 (Windows 11 + GitHub Actions ubuntu-latest).
+
+# --- data & modelling ---
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+scikit-learn==1.9.1
+xgboost==3.4.1
+joblib==1.6.0
+requests==2.34.2
+
+# --- visualisation / EDA ---
+matplotlib==3.11.2
+seaborn==0.13.2
+
+# --- experiment tracking ---
+mlflow==3.16.1
+
+# --- serving & monitoring ---
+fastapi==0.142.2
+uvicorn==0.54.0
+pydantic==2.13.5
+prometheus_client==0.26.0
+
+# --- testing & linting ---
+pytest==9.1.1
+pytest-cov==7.1.0
+httpx==0.28.1
+flake8==7.4.1
+
+# --- notebooks & reporting ---
+ipykernel==7.4.0
+nbformat==5.11.1
+nbconvert==7.17.1
+python-docx==1.2.0

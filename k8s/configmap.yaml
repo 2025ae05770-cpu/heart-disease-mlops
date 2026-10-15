@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: heart-api-config
+  namespace: heart-disease
+data:
+  LOG_LEVEL: "INFO"
+  LOG_FILE: "/app/logs/api.log"
+  MODEL_PATH: "/app/models/heart_disease_model.joblib"
+  METADATA_PATH: "/app/models/model_metadata.json"

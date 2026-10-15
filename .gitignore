@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv-linux/
+venv/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+test-results/
+
+# MLflow local tracking store (re-created by `python -m src.models.train`)
+mlruns/
+mlflow.db
+mlflow-linux.db
+mlruns-linux/
+mlartifacts/
+
+# Runtime logs
+logs/
+
+# Data: the raw download is reproducible via `python -m src.data.load_data`.
+# The cleaned dataset IS committed (assignment deliverable).
+data/raw/*
+!data/raw/.gitkeep
+data/processed/batch_predictions.csv
+
+# Notebook checkpoints / OS / editor
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
