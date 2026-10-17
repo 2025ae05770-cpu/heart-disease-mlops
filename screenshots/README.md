@@ -10,4 +10,4 @@ Evidence for the report (`reports/Heart_Disease_MLOPS_Report.docx`, figures refe
 | API (FastAPI / Swagger) | `OpenAPI_Swagger.png`, `OpenAPI_Swagger_POST_API.png`, `api_smoke_test.png` |
 | Docker | `Docker_build.png`, `Docker Run.png`, `Docker_run_with_curl_api_check.png`, `Docker_build_compose.png`, `Docker_containers_running.png` |
 | Kubernetes (Minikube) | `kucectl_deployment.png`, `kubectl_container_pods.png`, `kube_container_swagger_api.png`, `kubectl_swagger_post_api.png` |
-| Monitoring | `Prometheous_metrics.png`, `Prometheous_metrics_2.png`, `Grafana_1.png`, `Grafana_2.png`, `Grafana_3.png`, `Grafana_4.png` |
+| Monitoring | `Prometheous_metrics.png`, `Prometheous_metrics_2.png`, `Grafana_login.png`, `Grafana_metrics.png`, `Grafana_kubectl_conatiner_metrics.png` |
