@@ -14,7 +14,6 @@ Predicts the presence of heart disease from 13 clinical attributes (UCI Heart Di
 | Serving | FastAPI `/predict`, `/predict/batch`, `/health`, `/model-info`, `/metrics` in a non-root Docker image |
 | Deployment | Kubernetes manifests (Deployment, LoadBalancer Service, Ingress, HPA, ConfigMap) for Docker Desktop / Minikube |
 | Monitoring | Structured JSON request logs + Prometheus metrics + provisioned Grafana dashboard |
-| Orchestration | Airflow DAG (`dags/heart_disease_pipeline.py`) |
 
 ![Architecture](reports/figures/architecture.png)
 
@@ -202,15 +201,7 @@ Prometheus: NodePort `30090`, Grafana: NodePort `30030` (admin/admin) → dashbo
 
 Each job depends on the previous one and uses `bash -eo pipefail`, so any lint, test, training or smoke-test failure stops the pipeline with a clear log.
 
-## 9. Airflow (optional, as in Webinar 1)
-
-```bash
-pip install apache-airflow
-export AIRFLOW__CORE__DAGS_FOLDER=$(pwd)/dags
-airflow standalone
-airflow dags trigger heart_disease_mlops_pipeline
-```
-
 ## Report
 
-See [reports/REPORT.md](reports/REPORT.md) (and the generated `.docx`). Repository link: <https://github.com/2025ae05770-cpu/heart-disease-mlops>.
+See [reports/REPORT.md](reports/REPORT.md) 
+Repository link: <https://github.com/2025ae05770-cpu/heart-disease-mlops>.
