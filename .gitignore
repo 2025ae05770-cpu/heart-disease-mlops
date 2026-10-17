@@ -32,3 +32,6 @@ data/processed/batch_predictions.csv
 Thumbs.db
 .vscode/
 .idea/
+
+# Generated draft of the report (the submitted report is finalised in Word)
+reports/Heart_Disease_MLOps_Report_draft.docx

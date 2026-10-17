@@ -1,7 +1,10 @@
-// Build reports/Heart_Disease_MLOps_Report.docx from reports/REPORT.md (docx-js).
-// Usage:  node scripts/build_report_docx.js
+// Build a draft .docx (reports/Heart_Disease_MLOps_Report_draft.docx) from reports/REPORT.md (docx-js).
+// The submitted report (reports/Heart_Disease_MLOPS_Report.docx) is finalised by hand in Word,
+// so the default output uses a different name and never overwrites it (Windows paths are case-insensitive).
+// Usage:  node scripts/build_report_docx.js [output.docx]
 // Supports the Markdown subset used in REPORT.md: headings, paragraphs, bullet / numbered
 // lists, pipe tables, fenced code, images and inline **bold**, `code`, _italic_, <links>.
+// Image lines with no blank line between them are laid out side by side (2 per row).
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
@@ -20,9 +23,9 @@ const {
 
 const ROOT = path.resolve(__dirname, "..");
 const MD_PATH = path.join(ROOT, "reports", "REPORT.md");
-const OUT_PATH = path.join(ROOT, "reports", "Heart_Disease_MLOps_Report.docx");
+const OUT_PATH = process.argv[2] ? path.resolve(process.argv[2]) : path.join(ROOT, "reports", "Heart_Disease_MLOps_Report_draft.docx");
 
-const PAGE = { width: 11906, height: 16838, margin: 1134 }; // A4, 2 cm margins
+const PAGE = { width: 11906, height: 16838, margin: 1020 }; // A4, 1.8 cm margins
 const CONTENT_W = PAGE.width - 2 * PAGE.margin; // 9638 DXA
 const CONTENT_IN = CONTENT_W / 1440;
 const FONT = "Arial";
@@ -63,18 +66,17 @@ function pngSize(file) {
 function targetWidthIn(file) {
   const name = path.basename(file);
   if (/class_balance|confusion_matrix|feature_importance|comparison_roc|missing_values/.test(name)) return 3.6;
-  if (/^\d\d_.*\.png$/.test(name) && file.includes("screenshots")) {
-    return /lint_and_unit_tests/.test(name) ? 5.6 : 5.4;
-  }
-  return 6.2;
+  if (/^\d\d_.*\.png$/.test(name) && file.includes("screenshots")) return 3.9;
+  if (/architecture/.test(name)) return 5.4;
+  return 5.0;
 }
 
-function imageBlock(alt, relPath) {
+function imageBlock(alt, relPath, opts = {}) {
   const file = path.resolve(path.dirname(MD_PATH), relPath);
   const caption = new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { after: 200 },
-    children: [new TextRun({ text: alt, italics: true, size: 18, color: "555555" })],
+    spacing: { after: opts.captionAfter ?? 160 },
+    children: [new TextRun({ text: alt, italics: true, size: 17, color: "555555" })],
   });
   if (!fs.existsSync(file)) {
     const rel = path.relative(ROOT, file).replace(/\\/g, "/");
@@ -95,15 +97,15 @@ function imageBlock(alt, relPath) {
     ];
   }
   const { w, h, data } = pngSize(file);
-  let widthIn = Math.min(targetWidthIn(file), CONTENT_IN);
+  let widthIn = Math.min(opts.maxW ?? targetWidthIn(file), CONTENT_IN);
   let heightIn = (widthIn * h) / w;
-  const maxH = 8.2;
+  const maxH = opts.maxH ?? 3.8;
   if (heightIn > maxH) { widthIn *= maxH / heightIn; heightIn = maxH; }
   return [
     new Paragraph({
       alignment: AlignmentType.CENTER,
       keepNext: true,
-      spacing: { before: 120 },
+      spacing: { before: opts.before ?? 80 },
       children: [new ImageRun({
         type: "png", data,
         transformation: { width: Math.round(widthIn * 96), height: Math.round(heightIn * 96) },
@@ -111,6 +113,33 @@ function imageBlock(alt, relPath) {
       })],
     }),
     caption,
+  ];
+}
+
+// Figures side by side in a borderless table (one row per pair).
+function imageRow(images) {
+  const n = images.length;
+  const colW = Math.floor(CONTENT_W / n);
+  const widths = Array(n).fill(colW);
+  widths[n - 1] += CONTENT_W - colW * n;
+  const none = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+  const borders = { top: none, bottom: none, left: none, right: none };
+  return [
+    new Table({
+      width: { size: CONTENT_W, type: WidthType.DXA },
+      columnWidths: widths,
+      borders: { ...borders, insideHorizontal: none, insideVertical: none },
+      rows: [new TableRow({
+        cantSplit: true,
+        children: images.map(([alt, rel], i) => new TableCell({
+          borders,
+          width: { size: widths[i], type: WidthType.DXA },
+          margins: { top: 0, bottom: 0, left: 60, right: 60 },
+          children: imageBlock(alt, rel, { maxW: widths[i] / 1440 - 0.15, maxH: 2.35, before: 40, captionAfter: 60 }),
+        })),
+      })],
+    }),
+    new Paragraph({ spacing: { after: 80 }, children: [] }),
   ];
 }
 
@@ -186,11 +215,11 @@ function build() {
     if (line.startsWith("# ")) {
       title = line.slice(2).trim();
       children.push(new Paragraph({
-        alignment: AlignmentType.CENTER, spacing: { before: 1800, after: 240 },
-        children: [new TextRun({ text: title, bold: true, size: 44, color: ACCENT })],
+        alignment: AlignmentType.CENTER, spacing: { before: 0, after: 120 },
+        children: [new TextRun({ text: title, bold: true, size: 36, color: ACCENT })],
       }));
       children.push(new Paragraph({
-        alignment: AlignmentType.CENTER, spacing: { after: 600 },
+        alignment: AlignmentType.CENTER, spacing: { after: 200 },
         border: { bottom: { style: BorderStyle.SINGLE, size: 12, color: ACCENT, space: 8 } },
         children: [new TextRun({ text: "UCI Heart Disease  |  MLflow  |  FastAPI  |  Docker  |  Kubernetes  |  Prometheus/Grafana", size: 20, color: "595959" })],
       }));
@@ -200,7 +229,6 @@ function build() {
       h2Count++;
       children.push(new Paragraph({
         heading: HeadingLevel.HEADING_1,
-        pageBreakBefore: h2Count === 2,
         children: [new TextRun(line.slice(3).trim())],
       }));
       i++; continue;
@@ -223,8 +251,21 @@ function build() {
       children.push(...tableBlock(block));
       continue;
     }
-    const img = line.match(/^!\[(.*)\]\((.*)\)\s*$/);
-    if (img) { children.push(...imageBlock(img[1], img[2])); i++; continue; }
+    const IMG_RE = /^!\[(.*)\]\((.*)\)\s*$/;
+    if (IMG_RE.test(line)) {
+      const group = [];
+      while (i < lines.length && IMG_RE.test(lines[i])) {
+        const m = lines[i].match(IMG_RE);
+        group.push([m[1], m[2]]);
+        i++;
+      }
+      if (group.length === 1) children.push(...imageBlock(...group[0]));
+      for (let g = 0; group.length > 1 && g < group.length; g += 2) {
+        const pair = group.slice(g, g + 2);
+        children.push(...(pair.length === 2 ? imageRow(pair) : imageBlock(...pair[0])));
+      }
+      continue;
+    }
 
     const bullet = line.match(/^(\s*)- (.*)$/);
     if (bullet) {
@@ -249,7 +290,7 @@ function build() {
     const isMeta = /^\*\*[^*]+:\*\*/.test(line) && h2Count === 0;
     children.push(new Paragraph({
       alignment: isMeta ? AlignmentType.CENTER : AlignmentType.JUSTIFIED,
-      spacing: { after: isMeta ? 80 : 140 },
+      spacing: { after: isMeta ? 40 : 100 },
       children: inlineRuns(line),
     }));
     i++;
@@ -277,15 +318,15 @@ function build() {
     title,
     description: "MLOps Assignment 1 report",
     styles: {
-      default: { document: { run: { font: FONT, size: 21 } } },
+      default: { document: { run: { font: FONT, size: 20 } } },
       paragraphStyles: [
         { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
-          run: { size: 30, bold: true, font: FONT, color: ACCENT },
-          paragraph: { spacing: { before: 320, after: 140 }, outlineLevel: 0, keepNext: true,
+          run: { size: 28, bold: true, font: FONT, color: ACCENT },
+          paragraph: { spacing: { before: 240, after: 100 }, outlineLevel: 0, keepNext: true,
             border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: "9DC3E6", space: 4 } } } },
         { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
-          run: { size: 25, bold: true, font: FONT, color: "2E75B6" },
-          paragraph: { spacing: { before: 220, after: 100 }, outlineLevel: 1, keepNext: true } },
+          run: { size: 24, bold: true, font: FONT, color: "2E75B6" },
+          paragraph: { spacing: { before: 160, after: 80 }, outlineLevel: 1, keepNext: true } },
       ],
     },
     numbering: { config: numberingConfig },

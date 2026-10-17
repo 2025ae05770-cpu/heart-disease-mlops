@@ -59,12 +59,11 @@ The design follows the Webinar 1 pattern. The notebooks only orchestrate, and al
 - Six missing values remain (`ca` 4, `thal` 2). They are kept in the cleaned CSV on purpose and imputed inside the model pipeline. This keeps imputation statistics fold-local during CV, which avoids leakage, and makes serving apply exactly the same step.
 
 ![Figure 2 - Class balance: 164 without disease (54%) vs 139 with disease (46%)](figures/01_class_balance.png)
+![Figure 3 - Correlation heatmap of features and target](figures/04_correlation_heatmap.png)
 
-![Figure 3 - Numeric feature distributions by diagnosis](figures/02_numeric_histograms.png)
+![Figure 4 - Numeric feature distributions by diagnosis](figures/02_numeric_histograms.png)
 
-![Figure 4 - Observed disease rate per categorical level (n shown on bars)](figures/03_categorical_disease_rate.png)
-
-![Figure 5 - Correlation heatmap of features and target](figures/04_correlation_heatmap.png)
+![Figure 5 - Observed disease rate per categorical level (n shown on bars)](figures/03_categorical_disease_rate.png)
 
 **Key findings and their impact on modelling:**
 
@@ -104,7 +103,6 @@ The output is 23 model features.
 | XGBoost | 0.826 | 0.838 | 0.783 | 0.803 | 0.894 ± 0.024 | 0.902 | 0.867 | 0.929 | 0.897 | 0.957 |
 
 ![Figure 6 - Cross-validated metrics per model (mean ± std over 5 folds)](figures/models/comparison_cv_metrics.png)
-
 ![Figure 7 - ROC curves of all candidates on the hold-out set](figures/models/comparison_roc.png)
 
 **Model selection rationale** (`src/tracking/select_champion.py`):
@@ -114,7 +112,6 @@ The output is 23 model features.
 - Logistic Regression is also interpretable, and it is small and fast to serve. Its largest coefficients are `sex`, `ca`, `cp = 4` (asymptomatic) and `thal = 7` (reversible defect), which is clinically plausible.
 
 ![Figure 8 - Champion confusion matrix (hold-out): 26 of 28 diseased patients detected](figures/models/logistic_regression_confusion_matrix.png)
-
 ![Figure 9 - Champion feature importance (absolute standardised coefficients)](figures/models/logistic_regression_feature_importance.png)
 
 ## 6. Experiment Tracking (MLflow)
@@ -133,15 +130,11 @@ The output is 23 model features.
 
 Three training runs (CLI, notebook and re-run) produced identical metrics and registry versions 1 to 3, which confirms that training is reproducible end to end.
 
-![Figure 10 - MLflow experiment: parent runs per model family with the dataset input](../screenshots/01_mlflow_experiment_runs.png)
-
-![Figure 11 - MLflow chart view comparing CV metrics across runs](../screenshots/02_mlflow_metric_charts.png)
-
-![Figure 12 - Champion run with its nested grid-candidate child runs](../screenshots/03_mlflow_champion_run.png)
-
-![Figure 13 - Logged plot artifacts (ROC/PR curves) for the champion run](../screenshots/04_mlflow_artifacts.png)
-
-![Figure 14 - Model Registry: HeartDiseaseRiskChampion versions with the @champion alias](../screenshots/05_mlflow_model_registry.png)
+![Figure 10 - MLflow experiment: parent runs per model family with the dataset input](../screenshots/mlflow_experiment_runs.png)
+![Figure 11 - MLflow chart view comparing CV metrics across runs](../screenshots/mlflow_metric_charts_1.png)
+![Figure 12 - Model-comparison run that tags the champion](../screenshots/mlflow_model_champion.png)
+![Figure 13 - Logged plot artifact: ROC comparison of all models](../screenshots/mlflow_comparison_roc.png)
+![Figure 14 - Model Registry: HeartDiseaseRiskChampion versions with the @champion alias](../screenshots/mlflow_model_registry.png)
 
 ## 7. Model Packaging and Reproducibility
 
@@ -152,12 +145,7 @@ Three training runs (CLI, notebook and re-run) produced identical metrics and re
 | `models/mlflow_model/` | MLflow format (`MLmodel`, `model.pkl`, `conda.yaml`, `python_env.yaml`, `requirements.txt`, signature, input example, bundled code), servable with `mlflow models serve` |
 | `requirements.txt` / `requirements-serve.txt` | Pinned full environment and pinned minimal runtime |
 
-Reproducibility comes from four things:
-
-- Fixed seeds (`random_state = 42`) for the split, the CV folds and every model.
-- Configuration in one place (`src/config.py`).
-- Preprocessing fitted inside the pipeline, so there is no training/serving skew.
-- Pinned dependency versions.
+Reproducibility comes from fixed seeds (`random_state = 42`) for the split, CV folds and every model; configuration in one place (`src/config.py`); preprocessing fitted inside the pipeline, so there is no training/serving skew; and pinned dependency versions.
 
 Loading `models/mlflow_model` with `mlflow.pyfunc` and loading `models:/HeartDiseaseRiskChampion@champion` both return the same prediction as the joblib model. Batch scoring (`python -m src.inference.predict`) writes `data/processed/batch_predictions.csv`.
 
@@ -180,9 +168,8 @@ Loading `models/mlflow_model` with `mlflow.pyfunc` and loading `models:/HeartDis
 3. **Train:** download, EDA, training with MLflow tracking and registration, then batch inference. The model, reports, `mlflow.db`, `mlruns/`, logs and processed data are uploaded, and the model comparison table is written to the job summary.
 4. **Docker:** builds the image from the model trained in step 3, runs the container, and smoke-tests `/health`, three `/predict` cases, the 422 path, `/predict/batch` and `/metrics`. Container logs are uploaded. On `main`, the image is pushed to `ghcr.io/<owner>/heart-disease-api`.
 
-![Figure 15 - Local run of lint and the unit-test suite with coverage](../screenshots/09_lint_and_unit_tests.png)
-
-![Figure 16 - GitHub Actions run showing the lint, test, train and docker jobs and their artifacts](../screenshots/11_github_actions_pipeline.png)
+![Figure 15 - Local run of lint and the unit-test suite with coverage](../screenshots/lint_and_unit_tests.png)
+![Figure 16 - GitHub Actions run showing the lint, test, train and docker jobs and their artifacts](../screenshots/Github_Actions.png)
 
 ## 9. Containerisation, Deployment and API
 
@@ -225,15 +212,11 @@ Build and run with `docker build -t heart-disease-api:1.0.0 .` and `docker run -
 | Minikube | `minikube tunnel`, then the EXTERNAL-IP, or `minikube service heart-disease-api -n heart-disease --url` |
 | Ingress | Hosts entry `<ingress-ip> heart-disease.local`, then `http://heart-disease.local/docs` |
 
-![Figure 17 - Swagger UI: live /predict call returning prediction and confidence](../screenshots/07_api_swagger_predict_response.png)
-
-![Figure 18 - Smoke test against the running API (7/7 checks)](../screenshots/10_api_smoke_test.png)
-
-![Figure 19 - docker build and docker run with a sample request](../screenshots/12_docker_build_run.png)
-
-![Figure 20 - kubectl get pods,svc,ingress,hpa -n heart-disease](../screenshots/13_k8s_resources.png)
-
-![Figure 21 - Endpoint verification through the LoadBalancer / Ingress](../screenshots/14_k8s_endpoint_test.png)
+![Figure 17 - Swagger UI: live /predict call returning prediction and confidence](../screenshots/OpenAPI_Swagger_POST_API.png)
+![Figure 18 - Smoke test against the running API (7/7 checks)](../screenshots/api_smoke_test.png)
+![Figure 19 - docker run with a curl request to /predict](../screenshots/Docker_run_with_curl_api_check.png)
+![Figure 20 - kubectl: pods, services and deployment in namespace heart-disease](../screenshots/kubectl_container_pods.png)
+![Figure 21 - Endpoint verification: /predict through the Kubernetes service](../screenshots/kubectl_swagger_post_api.png)
 
 ## 10. Monitoring and Logging
 
@@ -258,9 +241,8 @@ Endpoint labels use the route template rather than the raw path, which keeps lab
 - Grafana is provisioned automatically with a datasource and the **Heart Disease API** dashboard. Its panels show: model loaded, total predictions, request rate, p95 latency, 5xx error ratio, count of validation rejects, requests by endpoint and status, p50/p95/p99 latency, predictions by label, and the share of high-risk predictions over 15 minutes as a simple prediction-drift signal.
 - `scripts/generate_traffic.py` replays rows from the cleaned dataset (about 5% deliberately invalid) to populate the dashboard.
 
-![Figure 22 - Prometheus metrics exposed by the API after generated traffic](../screenshots/08_api_prometheus_metrics.png)
-
-![Figure 23 - Grafana "Heart Disease API" dashboard](../screenshots/16_grafana_dashboard.png)
+![Figure 22 - Prometheus query graph of API metrics after generated traffic](../screenshots/Prometheous_metrics_2.png)
+![Figure 23 - Grafana "Heart Disease API" dashboard](../screenshots/Grafana_2.png)
 
 ## 11. Conclusions and Future Work
 
@@ -286,5 +268,5 @@ Possible next steps:
 | Deployment manifests | `k8s/`, `k8s/monitoring/` |
 | Monitoring configuration | `monitoring/` (Prometheus and Grafana provisioning, dashboard JSON) |
 | Screenshots | `screenshots/` |
-| Report | `reports/REPORT.md`, `reports/Heart_Disease_MLOps_Report.docx` |
+| Report | `reports/Heart_Disease_MLOPS_Report.docx` (submitted), `reports/REPORT.md` |
 | Orchestration (as in class) | `dags/heart_disease_pipeline.py` |
