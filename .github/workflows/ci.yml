@@ -124,6 +124,7 @@ jobs:
           name: training-run
           path: |
             reports/
+            screenshots/
             logs/
             mlflow.db
             mlruns/

@@ -15,7 +15,7 @@ Predicts the presence of heart disease from 13 clinical attributes (UCI Heart Di
 | Deployment | Kubernetes manifests (Deployment, LoadBalancer Service, Ingress, HPA, ConfigMap) for Docker Desktop / Minikube |
 | Monitoring | Structured JSON request logs + Prometheus metrics + provisioned Grafana dashboard |
 
-![Architecture](reports/figures/architecture.png)
+![Architecture](screenshots/architecture.png)
 
 ---
 
@@ -33,8 +33,8 @@ heart-disease-mlops/
 ├── models/                        # champion: joblib pipeline, metadata, MLflow model
 ├── monitoring/                    # Prometheus config + Grafana provisioning & dashboard (docker compose)
 ├── notebooks/                     # 01_eda, 02_model_training, 03_inference (executed, with outputs)
-├── reports/                       # REPORT.md, figures/, model comparison, EDA summaries
-├── screenshots/                   # screenshots for the report
+├── reports/                       # submitted Word report, REPORT.md, model comparison, EDA summaries
+├── screenshots/                   # architecture.png, EDA/, models/, operational evidence
 ├── scripts/                       # download, smoke test, traffic generator, k8s deploy, pipeline runners
 ├── src/
 │   ├── config.py                  # paths, column groups, experiment settings
@@ -91,7 +91,7 @@ uvicorn src.api.main:app --host 0.0.0.0 --port 8000   # reachable from Windows a
 
 ```bash
 python scripts/download_data.py        # downloads processed.cleveland.data and writes the cleaned CSV
-python -m src.eda.run_eda              # figures -> reports/figures/, summaries -> reports/
+python -m src.eda.run_eda              # figures -> screenshots/EDA/, summaries -> reports/
 ```
 
 Source: <https://archive.ics.uci.edu/dataset/45/heart+disease> (`processed.cleveland.data`, 303 rows, 14 columns).
@@ -104,7 +104,7 @@ python -m src.models.train --quick     # 1-point grids (fast smoke run)
 mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000   # http://127.0.0.1:5000
 ```
 
-Outputs: `models/heart_disease_model.joblib`, `models/model_metadata.json`, `models/mlflow_model/`, `reports/model_comparison.{csv,md}`, `reports/figures/models/*.png`, MLflow runs in `mlflow.db` + `mlruns/`, registered model `HeartDiseaseRiskChampion@champion`.
+Outputs: `models/heart_disease_model.joblib`, `models/model_metadata.json`, `models/mlflow_model/`, `reports/model_comparison.{csv,md}`, `screenshots/models/*.png`, MLflow runs in `mlflow.db` + `mlruns/`, registered model `HeartDiseaseRiskChampion@champion`.
 
 Batch scoring with the packaged model:
 

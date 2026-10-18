@@ -1,4 +1,4 @@
-"""Render the system architecture diagram -> reports/figures/architecture.png"""
+"""Render the system architecture diagram -> screenshots/architecture.png"""
 
 from pathlib import Path
 
@@ -8,7 +8,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch  # noqa: E402
 
-OUT = Path(__file__).resolve().parent.parent / "reports" / "figures" / "architecture.png"
+OUT = Path(__file__).resolve().parent.parent / "screenshots" / "architecture.png"
 
 LANES = [
     ("1. Data & Experimentation", 7.6, "#e9f5f3"),

@@ -48,7 +48,7 @@ MODEL_PATH = Path(os.getenv("MODEL_PATH", MODELS_DIR / "heart_disease_model.jobl
 METADATA_PATH = Path(os.getenv("METADATA_PATH", MODELS_DIR / "model_metadata.json"))
 MLFLOW_MODEL_DIR = MODELS_DIR / "mlflow_model"
 REPORTS_DIR = PROJECT_ROOT / "reports"
-FIGURES_DIR = REPORTS_DIR / "figures"
+FIGURES_DIR = PROJECT_ROOT / "screenshots"
 
 # --- MLflow -----------------------------------------------------------------
 MLFLOW_TRACKING_URI = os.getenv(

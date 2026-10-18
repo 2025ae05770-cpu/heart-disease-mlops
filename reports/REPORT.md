@@ -21,7 +21,7 @@ The champion is **Logistic Regression** (C = 0.5, balanced class weights). It sc
 
 ## 2. Architecture
 
-![Figure 1 - System architecture: data and experimentation, CI/CD, serving and monitoring](figures/architecture.png)
+![Figure 1 - System architecture: data and experimentation, CI/CD, serving and monitoring](../screenshots/architecture.png)
 
 | Layer | Tools | Key files |
 |---|---|---|
@@ -58,12 +58,12 @@ The design follows the Webinar 1 pattern. The notebooks only orchestrate, and al
 - Duplicates are dropped (none found). Clinical range checks report out-of-range values (none found) and write them to `data_quality_report.json`.
 - Six missing values remain (`ca` 4, `thal` 2). They are kept in the cleaned CSV on purpose and imputed inside the model pipeline. This keeps imputation statistics fold-local during CV, which avoids leakage, and makes serving apply exactly the same step.
 
-![Figure 2 - Class balance: 164 without disease (54%) vs 139 with disease (46%)](figures/01_class_balance.png)
-![Figure 3 - Correlation heatmap of features and target](figures/04_correlation_heatmap.png)
+![Figure 2 - Class balance: 164 without disease (54%) vs 139 with disease (46%)](../screenshots/EDA/01_class_balance.png)
+![Figure 3 - Correlation heatmap of features and target](../screenshots/EDA/04_correlation_heatmap.png)
 
-![Figure 4 - Numeric feature distributions by diagnosis](figures/02_numeric_histograms.png)
+![Figure 4 - Numeric feature distributions by diagnosis](../screenshots/EDA/02_numeric_histograms.png)
 
-![Figure 5 - Observed disease rate per categorical level (n shown on bars)](figures/03_categorical_disease_rate.png)
+![Figure 5 - Observed disease rate per categorical level (n shown on bars)](../screenshots/EDA/03_categorical_disease_rate.png)
 
 **Key findings and their impact on modelling:**
 
@@ -102,8 +102,8 @@ The output is 23 model features.
 | Random Forest | 0.818 | 0.839 | 0.764 | 0.792 | 0.898 ± 0.028 | 0.885 | 0.839 | 0.929 | 0.881 | 0.950 |
 | XGBoost | 0.826 | 0.838 | 0.783 | 0.803 | 0.894 ± 0.024 | 0.902 | 0.867 | 0.929 | 0.897 | 0.957 |
 
-![Figure 6 - Cross-validated metrics per model (mean ± std over 5 folds)](figures/models/comparison_cv_metrics.png)
-![Figure 7 - ROC curves of all candidates on the hold-out set](figures/models/comparison_roc.png)
+![Figure 6 - Cross-validated metrics per model (mean ± std over 5 folds)](../screenshots/models/comparison_cv_metrics.png)
+![Figure 7 - ROC curves of all candidates on the hold-out set](../screenshots/models/comparison_roc.png)
 
 **Model selection rationale** (`src/tracking/select_champion.py`):
 
@@ -111,8 +111,8 @@ The output is 23 model features.
 - Logistic Regression has the best CV score on every metric and the lowest variance. The tree ensembles have slightly higher hold-out accuracy but lower CV scores, which points to hold-out noise rather than genuinely better performance. The small dataset (303 rows) also favours a well-regularised linear model over high-variance ensembles.
 - Logistic Regression is also interpretable, and it is small and fast to serve. Its largest coefficients are `sex`, `ca`, `cp = 4` (asymptomatic) and `thal = 7` (reversible defect), which is clinically plausible.
 
-![Figure 8 - Champion confusion matrix (hold-out): 26 of 28 diseased patients detected](figures/models/logistic_regression_confusion_matrix.png)
-![Figure 9 - Champion feature importance (absolute standardised coefficients)](figures/models/logistic_regression_feature_importance.png)
+![Figure 8 - Champion confusion matrix (hold-out): 26 of 28 diseased patients detected](../screenshots/models/logistic_regression_confusion_matrix.png)
+![Figure 9 - Champion feature importance (absolute standardised coefficients)](../screenshots/models/logistic_regression_feature_importance.png)
 
 ## 6. Experiment Tracking (MLflow)
 
@@ -242,7 +242,7 @@ Endpoint labels use the route template rather than the raw path, which keeps lab
 - `scripts/generate_traffic.py` replays rows from the cleaned dataset (about 5% deliberately invalid) to populate the dashboard.
 
 ![Figure 22 - Prometheus query graph of API metrics after generated traffic](../screenshots/Prometheous_metrics_2.png)
-![Figure 23 - Grafana "Heart Disease API" dashboard](../screenshots/Grafana_2.png)
+![Figure 23 - Grafana "Heart Disease API" dashboard](../screenshots/Grafana_metrics.png)
 
 ## 11. Conclusions and Future Work
 

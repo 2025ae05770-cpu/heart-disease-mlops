@@ -1,4 +1,4 @@
-"""Exploratory data analysis: generates figures + summary tables into reports/.
+"""Exploratory data analysis: figures in screenshots/EDA/, summary tables in reports/.
 
 Usage:
     python -m src.eda.run_eda
@@ -129,7 +129,7 @@ def plot_missing_values(data, output_dir):
     return _save(fig, "06_missing_values.png", output_dir)
 
 
-def run_eda(data=None, output_dir=FIGURES_DIR, reports_dir=REPORTS_DIR):
+def run_eda(data=None, output_dir=FIGURES_DIR / "EDA", reports_dir=REPORTS_DIR):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     if data is None:
