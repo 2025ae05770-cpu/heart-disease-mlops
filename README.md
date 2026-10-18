@@ -169,6 +169,32 @@ python scripts/generate_traffic.py --requests 300
 ./scripts/deploy_k8s.ps1 -Target docker-desktop     # or -Target minikube
 ```
 
+On Linux (including a remote university machine):
+
+```bash
+bash scripts/deploy_k8s.sh minikube
+```
+
+The Bash script requires Docker access and Minikube on PATH, not a Python virtual
+environment. It creates or starts the default `minikube` profile using the Docker
+driver (2 CPUs, 4096 MB), enables ingress and metrics-server, builds the image, and
+deploys the API, Prometheus and Grafana. If standalone `kubectl` is unavailable,
+it uses Minikube's bundled client. All deployment commands target the selected
+cluster explicitly. Existing profiles must be compatible with these settings.
+On shared machines, obtain permission before allocating cluster resources.
+
+The script waits for all three deployments and prints localhost port-forward
+commands. Run each in a separate terminal. For a remote host, also run this on
+your laptop (replace `USER@HOST` with your SSH login):
+
+```bash
+ssh -N -o ExitOnForwardFailure=yes -L 8000:127.0.0.1:8000 -L 9090:127.0.0.1:9090 -L 3000:127.0.0.1:3000 USER@HOST
+```
+
+Then open `http://localhost:8000/docs`, `http://localhost:9090`, and
+`http://localhost:3000` on your laptop. Keep the SSH tunnel and port-forwards
+running; do not expose them using `--address=0.0.0.0`.
+
 or manually:
 
 ```bash
